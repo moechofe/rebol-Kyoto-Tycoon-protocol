@@ -32,7 +32,13 @@ oks: 0 kos: 0
 ok: func [ ok ] [ either ok [oks: add oks 1][kos: add kos: 1] ]
 is: func [ test expect ] [ ok equal? test expect ]
 
-k/set "test" "tokyo"
-is k/get "test" "tokyo"
+; test SET and GET
+k/set "japan" "tokyo"
+is k/get "japan" "tokyo"
+
+; test XT with GET and SET
+k/set/expire "china" "beijing" 1
+is k/get/expire "china" test "beijing"
+print test
 
 print reform [ "ok:" oks "^\ko:" kos ]

@@ -9,8 +9,8 @@ REBOL
 	Rights: {Copyleft}
 	Tabs: 2
 	History: [
+		0.2.0 {Add GET command. Use a object instead of a function.}
 		0.1.0 {Add SET command. Able to choose the DB and set the expiration time.}
-		0.2.0 {Add GET command.}
 	]
 	Language: 'English
 	Library: [
@@ -53,46 +53,34 @@ url-decode: func [ "URL-decode a string"
 		[ data: skip data 2 to-char to-integer do join "#" copy/part back data 2 ]
 		[ first data ] ] ] copy "" ]
 
-kyoto: func [ "Return a function able to send commands to a KyotoTycoon server."
+kyoto: func [ "Return a function or an object able to send commands to a KyotoTycoon server."
 url [url!] "The URL of the server. Format: http://localhost:1978" ] [
 
-	do compose/deep [
-	func [ {Send query or send command to a Tokyo Tycon server and receive result from it.
+	do compose/deep [ context [
 
-     Set a record:
-     ----
-     k/set "japan" "toyko"
-     k/set/expire "japan" "kyoto" 123 ; Optional. The expiration time.
-     k/set/data "mybase.kch" ; Optional. The database identifier.
-     ----
-}
-	'key [unset! string! word! block!]
-	/set value [string! unset!] "Set a value to a record."
-	/get "Get a value from a record."
-	/base DB [string! word! file!] "The database identifier."
-	/expire 'xt [word! integer!] "The expiration time from now in seconds. If it is negative, the absolute value is treated as the epoch time."
-	/local command result in out ] [
-		in: copy []
+		set: func [ "Set a record:"
+		key [string! word! set-word!] "The key of th record."
+		value [any-string!] "Set a value to a record."
+		/base DB [string! word! file!] "The database identifier."
+		/expire xt [integer!] "The expiration time from now in seconds. If it is negative, the absolute value is treated as the epoch time."
+		/local in out ] [
+			in: rejoin ["key=" url-encode key "&value=" url-encode value]
+			probe in
+			if base [append in join "&DB=" DB]
+			if expire [append in join "&xt=" xt]
+			attempt [ parse read/custom (join url "/rpc/set") reduce ['post in] none ]
+			none ]
 
-		;unset? get/any 'key-or-query
-		if set [ command: 'set
-			in: [key value]
-			if base [append in 'DB]
-			if all [ expire integer? xt ] [append in 'xt] ]
-		if get [ command: 'get
-			in: [key]
-			if base [append in 'DB] ]
-
-		if value? in [
-			in: collect/into key [ foreach keys in [ if not unset? system/words/get/any keys
-			 [ key: rejoin [ keys "=" url-encode form system/words/get keys "&" ] ] ] ]
-			 copy "" ]
-
-		result: parse read/custom rejoin [ (url) "/rpc/" command ] reduce [ 'post in ] none
-
-		if all [ expire word? xt ] [ set xt select result "xt" ]
-
-		if found? find result "value" [ select result "value" ]
+		get: func [ "Get a record."
+		key [string! word! set-word!] "The key of th record."
+		/expire 'xt [word!] "The expiration time from now in seconds. If it is negative, the absolute value is treated as the epoch time."
+		/local in out ] [
+			in: join "key=" url-encode key
+			out: any [
+				attempt [ parse read/custom (join url "/rpc/get") reduce ['post in] none ]
+				copy [] ]
+			if expire [ set :xt select out "xt" ]
+			select out "value" ]
 
 	] ] ]
 
