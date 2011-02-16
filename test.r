@@ -1,14 +1,15 @@
 REBOL
 [
 	Title: "Kyoto Tycoon API test"
-	Date: 15-Feb-2011
-	Version: 0.1.0
+	Date: 16-Feb-2011
+	Version: 0.1.1
 	File: %test.r
 	Home: http://github.com/moechofe/KyoyoTycoon
 	Author: {martin mauchauffée}
 	Rights: {Copyleft}
 	Tabs: 2
 	History: [
+		0.1.1 {Add SET/GET test.}
 		0.1.0 {Add Test::More style func.}
 	]
 	Language: 'English
@@ -31,7 +32,7 @@ oks: 0 kos: 0
 ok: func [ ok ] [ either ok [oks: add oks 1][kos: add kos: 1] ]
 is: func [ test expect ] [ ok equal? test expect ]
 
-k/set "japan" "kyoto"
-k/get "japan"
+k/set "test" "tokyo"
+is k/get "test" "tokyo"
 
 print reform [ "ok:" oks "^\ko:" kos ]
