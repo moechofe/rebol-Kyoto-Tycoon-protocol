@@ -65,7 +65,6 @@ url [url!] "The URL of the server. Format: http://localhost:1978" ] [
 		/expire xt [integer!] "The expiration time from now in seconds. If it is negative, the absolute value is treated as the epoch time."
 		/local in out ] [
 			in: rejoin ["key=" url-encode key "&value=" url-encode value]
-			probe in
 			if base [append in join "&DB=" DB]
 			if expire [append in join "&xt=" xt]
 			attempt [ parse read/custom (join url "/rpc/set") reduce ['post in] none ]
@@ -79,8 +78,10 @@ url [url!] "The URL of the server. Format: http://localhost:1978" ] [
 			out: any [
 				attempt [ parse read/custom (join url "/rpc/get") reduce ['post in] none ]
 				copy [] ]
-			if expire [ set :xt select out "xt" ]
-			select out "value" ]
+			probe either expire [select out "xt"][none]
+			system/words/set/any :xt either expire [select out "xt"][none]
+			if found? find out "value" [ return url-decode select out "value" ]
+			none ]
 
 	] ] ]
 

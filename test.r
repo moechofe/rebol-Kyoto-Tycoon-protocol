@@ -28,8 +28,9 @@ do %kyoto.r
 
 k: kyoto to-url first parse system/script/args none
 
-oks: 0 kos: 0
-ok: func [ ok ] [ either ok [oks: add oks 1][kos: add kos: 1] ]
+oks: 0
+kos: 0
+ok: func [ ok ] [ either ok [oks: add oks 1][kos: add kos 1] ]
 is: func [ test expect ] [ ok equal? test expect ]
 
 ; test SET and GET
@@ -40,5 +41,10 @@ is k/get "japan" "tokyo"
 k/set/expire "china" "beijing" 1
 is k/get/expire "china" test "beijing"
 print test
+wait 1
+is k/get/expire "china" test "beijing"
+print test
+
+halt
 
 print reform [ "ok:" oks "^\ko:" kos ]
