@@ -58,7 +58,38 @@ url [url!] "The URL of the server. Format: http://localhost:1978" ] [
 
 	do compose/deep [ context [
 
-		set: func [ "Set a record:"
+		add: func [ "Add a record."
+		key [string! word! set-word!] "The key of th record."
+		/expire 'xt [word!] "The expiration time from now in seconds. If it is negative, the absolute value is treated as the epoch time."
+		/local in out ] [
+		/local in out ] [
+			in: join "key=" url-encode key
+
+			if error? out: try [ parse read/custom (join url "/rpc/add") reduce ['post in] none ]
+			[ out: disarm out switch/default out/code [
+				450 [ return false ] ]
+				[ make error! out ] ]
+
+			if expire [ system/words/set :xt do select out "xt" ]
+			if found? find out "value" [ return url-decode select out "value" ]
+			none ]
+
+		get: func [ "Get a record."
+		key [string! word! set-word!] "The key of th record."
+		/expire 'xt [word!] "The expiration time from now in seconds. If it is negative, the absolute value is treated as the epoch time."
+		/local in out ] [
+			in: join "key=" url-encode key
+
+			if error? out: try [ parse read/custom (join url "/rpc/get") reduce ['post in] none ]
+			[ out: disarm out switch/default out/code [
+				450 [ return false ] ]
+				[ make error! out ] ]
+
+			if expire [ system/words/set :xt do select out "xt" ]
+			if found? find out "value" [ return url-decode select out "value" ]
+			none ]
+
+		set: func [ [catch] "Set a record:"
 		key [string! word! set-word!] "The key of th record."
 		value [any-string!] "Set a value to a record."
 		/base DB [string! word! file!] "The database identifier."
@@ -67,21 +98,7 @@ url [url!] "The URL of the server. Format: http://localhost:1978" ] [
 			in: rejoin ["key=" url-encode key "&value=" url-encode value]
 			if base [append in join "&DB=" DB]
 			if expire [append in join "&xt=" xt]
-			attempt [ parse read/custom (join url "/rpc/set") reduce ['post in] none ]
-			none ]
-
-		get: func [ "Get a record."
-		key [string! word! set-word!] "The key of th record."
-		/expire 'xt [word!] "The expiration time from now in seconds. If it is negative, the absolute value is treated as the epoch time."
-		/local in out ] [
-			in: join "key=" url-encode key
-			out: any [
-				attempt [ parse read/custom (join url "/rpc/get") reduce ['post in] none ]
-				copy [] ]
-			probe either expire [select out "xt"][none]
-			system/words/set/any :xt either expire [select out "xt"][none]
-			if found? find out "value" [ return url-decode select out "value" ]
-			none ]
+			read/custom (join url "/rpc/set") reduce ['post in] ]
 
 	] ] ]
 
